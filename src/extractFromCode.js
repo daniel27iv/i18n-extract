@@ -3,6 +3,13 @@ import traverse from '@babel/traverse';
 
 const noInformationTypes = ['CallExpression', 'Identifier', 'MemberExpression'];
 
+function getTranKeys(node) {
+  if (node && node.type === 'StringLiteral') {
+    return node.value;
+  }
+
+  return null;
+}
 function getKeys(node) {
   if (node.type === 'StringLiteral') {
     return [node.value];
@@ -40,7 +47,7 @@ const commentRegExp = /i18n-extract (.+)/;
 const commentIgnoreRegExp = /i18n-extract-disable-line/;
 
 export default function extractFromCode(code, options = {}) {
-  const { marker = 'i18n', keyLoc = 0, parser = 'flow' } = options;
+  const { marker = 'i18n', keyLoc = 0, parser = 'flow', keyTr = 2 } = options;
 
   const availableParsers = ['flow', 'typescript'];
   if (!availableParsers.includes(parser)) {
@@ -109,10 +116,15 @@ export default function extractFromCode(code, options = {}) {
           keyLoc < 0 ? node.arguments[node.arguments.length + keyLoc] : node.arguments[keyLoc],
         );
 
+        const translate = getTranKeys(
+          keyTr < 0 ? node.arguments[node.arguments.length + keyTr] : node.arguments[keyTr],
+        );
+
         foundKeys.forEach(key => {
           if (key) {
             keys.push({
               key,
+              translate,
               loc: node.loc,
             });
           }
